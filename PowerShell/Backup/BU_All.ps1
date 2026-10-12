@@ -5,13 +5,13 @@
 .DESCRIPTION
     Uses Robocopy to copy new or changed files without purging target files.
     Pictures and Documents default to the current Windows user's known folders.
-    Supply -BackupSource to include an additional folder. Prevents automatic
+    BackupSource defaults to D:\BU; override it with -BackupSource. Prevents automatic
     system sleep during an executed backup, but not manual sleep or shutdown.
     Cloud-only files require their provider (such as OneDrive) to be running.
 .PARAMETER TargetRoot
     Existing, writable backup root (for example a NAS UNC share).
 .PARAMETER BackupSource
-    Optional additional source folder, copied directly to TargetRoot.
+    Additional source folder copied directly to TargetRoot (default D:\BU).
 .PARAMETER PicturesSource
     Pictures folder; defaults to the current user's Pictures known folder.
 .PARAMETER DocumentsSource
@@ -26,7 +26,7 @@
     Execute the backup and write a timestamped log.
 .NOTES
     Author: C. W. Hitz
-    Version: 1.3 (configurable public edition)
+    Version: 1.4 (configurable public edition)
     Windows PowerShell 5.1 or PowerShell 7 on Windows required.
 .OUTPUTS
     Console summary and timestamped log under TargetRoot\Logs.
@@ -37,7 +37,7 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$TargetRoot,
 
-    [string]$BackupSource,
+    [string]$BackupSource = 'D:\BU',
 
     [string]$PicturesSource = [Environment]::GetFolderPath('MyPictures'),
 
@@ -49,9 +49,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $LogTarget = Join-Path $TargetRoot 'Logs'
 $BackupJobs = @()
-if (-not [string]::IsNullOrWhiteSpace($BackupSource)) {
-    $BackupJobs += @{ Name = 'Backup'; Source = $BackupSource; Target = $TargetRoot }
-}
+$BackupJobs += @{ Name = 'Backup'; Source = $BackupSource; Target = $TargetRoot }
 $BackupJobs += @{ Name = 'Pictures'; Source = $PicturesSource; Target = (Join-Path $TargetRoot 'My Pictures') }
 $BackupJobs += @{ Name = 'Documents'; Source = $DocumentsSource; Target = (Join-Path $TargetRoot 'Misc') }
 
@@ -130,8 +128,14 @@ try {
                          '/DCOPY:DAT', '/XJ', '/TEE', "/LOG+:$LogFile")
             if (-not $Execute) { $Options += '/L' }
 
-            & robocopy.exe $Source $Target @Options
-            $Code = $LASTEXITCODE
+            try {
+                & robocopy.exe $Source $Target @Options
+                $Code = $LASTEXITCODE
+            }
+            catch {
+                $Code = 16
+                Add-Content -LiteralPath $LogFile -Value "Robocopy execution error: $_"
+            }
             if ($Code -ge 8) {
                 $JobStatus = 'Failed'
                 $BackupFailed = $true

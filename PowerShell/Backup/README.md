@@ -69,3 +69,34 @@ Optional configuration files, richer per-job statistics, and backup retention/ve
 ## PS Backup project conventions
 
 The default three jobs are D:\BU to the target root, the current user's Pictures to My Pictures, and the current user's Documents to Misc. Run preview first; use -Execute only after reviewing paths. Keep machine-specific NAS names and credentials out of this public repository.
+
+
+## Restore_All.ps1 — Restore or migrate to another PC
+
+Version **1.1** reverses the BU_All.ps1 jobs. **SourceRoot is the NAS backup root, not the local restore drive.**
+
+| NAS source | Local target (default) |
+| --- | --- |
+| SourceRoot | D:\BU |
+| SourceRoot\My Pictures | Current user's Pictures |
+| SourceRoot\Misc | Current user's Documents |
+
+Preview restoring Job 1 to E:\BU (Pictures and Documents retain their Windows known-folder targets):
+
+```powershell
+.\Restore_All.ps1 -SourceRoot '\\SERVER\Backup' -BackupTarget 'E:\BU'
+```
+
+Preview restoring **all three jobs** to E::
+
+```powershell
+.\Restore_All.ps1 -SourceRoot '\\SERVER\Backup' -BackupTarget 'E:\BU' -PicturesTarget 'E:\My Pictures' -DocumentsTarget 'E:\Misc'
+```
+
+Append `-Execute` only after verifying the preview. The restore uses Robocopy `/E /XO /R:2 /W:5 /COPY:DAT /DCOPY:DAT /XJ`, never `/MIR` or `/PURGE`. Job 1 excludes NAS `My Pictures`, `Misc`, `Logs`, `$RECYCLE.BIN`, and `System Volume Information` to avoid duplicate or Windows metadata restores. The script stops before execution if any expected NAS source folder is missing; preview reports unavailable folders. Preview writes a timestamped log under NAS `Logs` but does not copy files.
+
+The PowerShell 5.1 sleep-prevention flag uses decimal UInt32 values to avoid the signed hexadecimal conversion error. OneDrive-redirected local targets may require OneDrive to be configured on the new PC. SQL Server database restoration is not yet included.
+
+```powershell
+Get-Help .\Restore_All.ps1 -Full
+```

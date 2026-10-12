@@ -1,0 +1,29 @@
+name: Update PowerShell Script Index
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'PowerShell/**/*.ps1'
+      - 'PowerShell/**/*.psm1'
+      - 'PowerShell/Utilities/Update-ScriptIndex.ps1'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update-index:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Regenerate script directory
+        shell: pwsh
+        run: ./PowerShell/Utilities/Update-ScriptIndex.ps1
+      - name: Commit README only when changed
+        shell: pwsh
+        run: |
+          git add README.md
+          if (-not (git diff --cached --quiet)) {
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'docs: refresh PowerShell script index'
+            git push
+          }

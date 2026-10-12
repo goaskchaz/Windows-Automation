@@ -11,7 +11,7 @@ Automatically generated from PowerShell comment-based help. Do not edit this sec
 | Script | Version | Description |
 | --- | --- | --- |
 | [BU_All.ps1](PowerShell/Backup/BU_All.ps1) | 1.4 | Previews or backs up workstation folders to a configurable target. |
-| [Restore_All.ps1](PowerShell/Backup/Restore_All.ps1) | 1.1 | Preview or restore workstation files from a NAS backup. |
+| [Restore_All.ps1](PowerShell/Backup/Restore_All.ps1) | Not specified | Preview or restore workstation files from a NAS backup. |
 
 ### Utilities
 

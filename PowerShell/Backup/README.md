@@ -1,6 +1,6 @@
 # BU_All.ps1 — Workstation Backup
 
-PowerShell backup utility (version **1.3**, configurable public edition). Uses Windows **Robocopy** to preview or back up selected folders to a NAS share or other writable directory.
+PowerShell backup utility (version **1.4**, configurable public edition). Uses Windows **Robocopy** to preview or back up selected folders to a NAS share or other writable directory.
 
 ## Requirements
 
@@ -29,14 +29,14 @@ Override the automatically detected Windows folders if needed:
 .\BU_All.ps1 -TargetRoot '\\NAS\Backups' -PicturesSource 'C:\Photos' -DocumentsSource 'C:\Docs' -Execute
 ```
 
-`-BackupSource` is optional; if omitted, only Pictures and Documents are processed. The backup source copies directly into the target root. Pictures goes into `My Pictures`, Documents into `Misc`, and logs into `Logs`. The target root must already exist.
+`-BackupSource` defaults to D:\BU; override it to select another folder. The backup source copies directly into the target root. Pictures goes into `My Pictures`, Documents into `Misc`, and logs into `Logs`. The target root must already exist.
 
 ## Parameters
 
 | Parameter | Purpose |
 | --- | --- |
 | `-TargetRoot` | Required existing target directory or UNC share |
-| `-BackupSource` | Optional additional folder backed up to the target root |
+| `-BackupSource` | Additional folder backed up to the target root (defaults to D:\BU) |
 | `-PicturesSource` | Overrides current user's Pictures folder |
 | `-DocumentsSource` | Overrides current user's Documents folder |
 | `-Execute` | Copies files; omit to preview using Robocopy `/L` |
@@ -65,3 +65,7 @@ If a downloaded script is blocked under `RemoteSigned`, review the file and then
 ## Future enhancements
 
 Optional configuration files, richer per-job statistics, and backup retention/versioning can be added in later versions. Do not commit passwords, credentials, or machine-specific configuration files to a public repository.
+
+## PS Backup project conventions
+
+The default three jobs are D:\BU to the target root, the current user's Pictures to My Pictures, and the current user's Documents to Misc. Run preview first; use -Execute only after reviewing paths. Keep machine-specific NAS names and credentials out of this public repository.

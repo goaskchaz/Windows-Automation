@@ -17,6 +17,7 @@ Automatically generated from PowerShell comment-based help. Do not edit this sec
 
 | Script | Version | Description |
 | --- | --- | --- |
+| [Create_YearFldrs.ps1](PowerShell/Utilities/Create_YearFldrs.ps1) | 1.1 | Creates year-based folders in consecutive fixed-length intervals. |
 | [Update-ScriptIndex.ps1](PowerShell/Utilities/Update-ScriptIndex.ps1) | 1.0 | Rebuilds the PowerShell script directory in the repository README. |
 
 <!-- SCRIPT-INDEX:END -->

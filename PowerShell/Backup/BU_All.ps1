@@ -4,29 +4,24 @@
     Previews or backs up workstation folders to a configurable target.
 .DESCRIPTION
     Uses Robocopy to copy new or changed files without purging target files.
-    Pictures and Documents default to the current Windows user's known folders.
+    Only BackupSource is copied directly to TargetRoot.
     BackupSource defaults to D:\BU; override it with -BackupSource. Prevents automatic
     system sleep during an executed backup, but not manual sleep or shutdown.
-    Cloud-only files require their provider (such as OneDrive) to be running.
 .PARAMETER TargetRoot
     Existing, writable backup root (for example a NAS UNC share).
 .PARAMETER BackupSource
     Additional source folder copied directly to TargetRoot (default D:\BU).
-.PARAMETER PicturesSource
-    Pictures folder; defaults to the current user's Pictures known folder.
-.PARAMETER DocumentsSource
-    Documents folder; defaults to the current user's Documents known folder.
 .PARAMETER Execute
     Perform the backup. Without this switch, preview only.
 .EXAMPLE
     .\BU_All.ps1 -TargetRoot '\\NAS\Backups' -BackupSource 'D:\BU'
-    Preview the three configured jobs.
+    Preview the single configured job.
 .EXAMPLE
     .\BU_All.ps1 -TargetRoot '\\NAS\Backups' -BackupSource 'D:\BU' -Execute
     Execute the backup and write a timestamped log.
 .NOTES
     Author: C. W. Hitz
-    Version: 1.4 (configurable public edition)
+    Version: 1.5
     Windows PowerShell 5.1 or PowerShell 7 on Windows required.
 .OUTPUTS
     Console summary and timestamped log under TargetRoot\Logs.
@@ -39,9 +34,6 @@ param(
 
     [string]$BackupSource = 'D:\BU',
 
-    [string]$PicturesSource = [Environment]::GetFolderPath('MyPictures'),
-
-    [string]$DocumentsSource = [Environment]::GetFolderPath('MyDocuments'),
 
     [switch]$Execute
 )
@@ -50,8 +42,6 @@ $ErrorActionPreference = 'Stop'
 $LogTarget = Join-Path $TargetRoot 'Logs'
 $BackupJobs = @()
 $BackupJobs += @{ Name = 'Backup'; Source = $BackupSource; Target = $TargetRoot }
-$BackupJobs += @{ Name = 'Pictures'; Source = $PicturesSource; Target = (Join-Path $TargetRoot 'My Pictures') }
-$BackupJobs += @{ Name = 'Documents'; Source = $DocumentsSource; Target = (Join-Path $TargetRoot 'Misc') }
 
 # Verify target and create a log before starting.
 if (-not (Test-Path -LiteralPath $TargetRoot -PathType Container)) {
@@ -84,7 +74,7 @@ namespace BackupPower {
 }
 '@
 }
-$ES_CONTINUOUS = [uint32]0x80000000
+$ES_CONTINUOUS = [uint32]2147483648
 $ES_SYSTEM_REQUIRED = [uint32]0x00000001
 $SleepGuardActive = $false
 $Results = @()
@@ -122,9 +112,14 @@ try {
             Add-Content -LiteralPath $LogFile -Value "${JobStatus}: $Source"
         }
         else {
-            # /L previews; /XO skips older sources; /XJ avoids junction loops.
-            # No /MIR or /PURGE: target-only files are not removed.
-            $Options = @('/E', '/XO', '/R:2', '/W:5', '/COPY:DAT',
+            # /E copies subdirectories including empty ones.
+            # /XO excludes older source files; /FFT allows 2-second timestamp precision.
+            # /Z enables restartable copy; /R:2 retries twice; /W:5 waits 5 seconds.
+            # /NP hides percentages; /V shows verbose output including skipped files.
+            # /FP shows full file paths; /XJ excludes junction points.
+            # /L previews; no /MIR or /PURGE, so destination-only files remain.
+            $Options = @('/E', '/XO', '/FFT', '/Z', '/R:2', '/W:5',
+                         '/NP', '/V', '/FP', '/COPY:DAT',
                          '/DCOPY:DAT', '/XJ', '/TEE', "/LOG+:$LogFile")
             if (-not $Execute) { $Options += '/L' }
 
